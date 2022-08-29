@@ -2,16 +2,16 @@
 //  GFEmptyStateView.swift
 //  FirstUIKitProgrammaticApp
 //
-//  Created by Sebastian Hajduk on 22/08/2022.
+//  Created by Sebastian Hajduk on 24/08/2022.
 //
 
 import UIKit
 
 class GFEmptyStateView: UIView {
-    
+
     let messageLabel = GFTitleLabel(textAlignment: .center, fontSize: 28)
     let logoImageView = UIImageView()
-
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -47,7 +47,7 @@ class GFEmptyStateView: UIView {
             logoImageView.widthAnchor.constraint(equalTo: self.widthAnchor, multiplier: 1.3),
             logoImageView.heightAnchor.constraint(equalTo: self.widthAnchor, multiplier: 1.3),
             logoImageView.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: 170),
-            logoImageView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: 40)
+            logoImageView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: 50)
         ])
     }
 
