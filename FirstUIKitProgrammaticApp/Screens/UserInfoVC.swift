@@ -27,7 +27,7 @@ class UserInfoVC: GFDataLoadingVC {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        configureScrollView()
         layoutUI()
         configureViewController()
         getUserInfo()
@@ -53,22 +53,25 @@ class UserInfoVC: GFDataLoadingVC {
     }
     
     func getUserInfo() {
-        NetworkManager.shared.getUserInfo(for: username) { [weak self] result in
-            guard let self = self else { return }
-            
-            switch result {
-            case .success(let user):
-                DispatchQueue.main.async { self.configureUIElements(with: user) }
-            case .failure(let error):
-                self.presentGFAlertOnMainThread(title: "Something went wrong", message: error.rawValue, buttonTitle: "OK")
+        Task {
+            do {
+                let user = try await NetworkManager.shared.getUserInfo(for: username)
+                configureUIElements(with: user)
+            } catch {
+                if let gfError = error as? GFError {
+                    presentGFAlert(title: "Bad stuff happend", message: gfError.rawValue, buttonTitle: "OK")
+                } else {
+                    presentGFAlert(title: "Bad stuff happend", message: "Try again later", buttonTitle: "OK")
+                }
             }
         }
     }
+    
     func configureUIElements(with user: User) {
-         self.add(childVC: GFRepoItemVC(user: user, delegate: self), to: self.itemViewOne)
+        self.add(childVC: GFRepoItemVC(user: user, delegate: self), to: self.itemViewOne)
         self.add(childVC: GFFollowerItemVC(user: user, delegate: self), to: self.itemViewTwo)
         self.add(childVC: GFUserInfoHeaderVC(user: user), to: self.headerView)
-        self.dateLabel.text = "GitHub since \(user.createdAt)"
+        self.dateLabel.text = "GitHub since \(user.createdAt.convertToMonthYearFormat())"
     }
     
     func layoutUI() {
@@ -100,7 +103,7 @@ class UserInfoVC: GFDataLoadingVC {
             dateLabel.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
-
+    
     func add(childVC: UIViewController, to containerView: UIView) {
         addChild(childVC)
         containerView.addSubview(childVC.view)
@@ -116,10 +119,10 @@ class UserInfoVC: GFDataLoadingVC {
 extension UserInfoVC: GFRepoItemVCDelegate {
     func didTapGitHubProfile(for user: User) {
         guard let url = URL(string: user.htmlUrl) else {
-            presentGFAlertOnMainThread(title: "Invalid URL", message: "The url attached to this user is invalid.", buttonTitle: "OK")
+            presentGFAlert(title: "Invalid URL", message: "The url attached to this user is invalid.", buttonTitle: "OK")
             return
         }
-
+        
         presentSafariVC(with: url)
     }
     
@@ -129,7 +132,7 @@ extension UserInfoVC: GFRepoItemVCDelegate {
 extension UserInfoVC: GFFollowerItemVCDelegate {
     func didTapGetFollowers(for user: User) {
         guard user.followers != 0 else {
-            presentGFAlertOnMainThread(title: "No followers", message: "This user has no followers. What a shame 😣.", buttonTitle: "So sad")
+            presentGFAlert(title: "No followers", message: "This user has no followers. What a shame 😣.", buttonTitle: "So sad")
             return
         }
         delegate.didRequestFollowers(for: user.login)
